@@ -1,14 +1,18 @@
-{
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "vistora",
-  "compatibility_date": "2025-09-27",
-  "observability": {
-    "enabled": true
-  },
-  "assets": {
-    "directory": "."
-  },
-  "compatibility_flags": [
-    "nodejs_compat"
-  ]
-}
+export default {
+    async fetch(request, env) {
+        const url = new URL(request.url);
+        
+        // Проверка базы
+        if (url.pathname === "/check-db") {
+            return new Response(JSON.stringify({
+                hasDB: !!env.DB,
+                message: env.DB ? "✅ База есть!" : "❌ Базы нет"
+            }), {
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+        
+        // Если зашли на главную
+        return new Response("Vistora API работает. Используй /check-db");
+    }
+};
