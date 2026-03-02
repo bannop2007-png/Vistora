@@ -1,5 +1,5 @@
 export default {
     async fetch(request, env) {
-        return new Response("✅ Worker запущен! База: " + (env.DB ? "ЕСТЬ" : "НЕТ"));
+        return new Response("env.DB = " + (env.DB ? "✅ ЕСТЬ" : "❌ НЕТ"));
     }
 };
