@@ -10,68 +10,105 @@
 <body>
     <header class="header">
         <div class="header-left">
-            <a href="index.html" class="logo">
-                <i class="fas fa-play-circle"></i>
-                Vistora
-            </a>
+            <button class="menu-btn" id="menuToggle"><i class="fas fa-bars"></i></button>
+            <a href="index.html" class="logo"><i class="fas fa-play-circle"></i><span>Vistora</span></a>
         </div>
         <div class="search-container">
-            <form class="search-form" onsubmit="return false;">
+            <form class="search-form" id="searchForm">
                 <input type="text" placeholder="Поиск" id="searchInput">
                 <button type="submit"><i class="fas fa-search"></i></button>
             </form>
         </div>
         <div class="header-right">
-            <button class="create-btn" onclick="location.href='upload.html'">
-                <i class="fas fa-video"></i>
-            </button>
-            <div class="user-avatar" onclick="location.href='profile.html'">
-                <img src="https://via.placeholder.com/32" alt="User">
-            </div>
+            <button class="create-btn" onclick="location.href='upload.html'"><i class="fas fa-video"></i><span>Создать</span></button>
+            <div class="user-avatar" onclick="location.href='profile.html'"><img src="https://via.placeholder.com/32" alt="User"></div>
         </div>
     </header>
 
-    <div class="main-content" style="margin-left: 0; padding: 80px 20px 20px;">
-        <h1 style="margin-bottom: 30px;">
-            <i class="fas fa-fire" style="color: var(--primary-color);"></i>
-            В тренде
-        </h1>
-        
-        <div class="videos-grid" id="trendingGrid"></div>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>Главная</span></a>
+                <a href="trending.html" class="nav-item active"><i class="fas fa-fire"></i><span>В тренде</span></a>
+                <a href="subscriptions.html" class="nav-item"><i class="fas fa-bell"></i><span>Подписки</span></a>
+                <hr class="sidebar-divider">
+                <a href="library.html" class="nav-item"><i class="fas fa-folder"></i><span>Библиотека</span></a>
+                <a href="history.html" class="nav-item"><i class="fas fa-history"></i><span>История</span></a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <h1 style="margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-fire" style="color: var(--primary);"></i>
+                В тренде
+            </h1>
+            
+            <div class="filters-bar">
+                <button class="filter-chip active" data-category="all">Все</button>
+                <button class="filter-chip" data-category="tech">Технологии</button>
+                <button class="filter-chip" data-category="music">Музыка</button>
+                <button class="filter-chip" data-category="games">Игры</button>
+            </div>
+
+            <div class="videos-grid" id="trendingGrid"></div>
+            <div class="load-more-wrapper">
+                <button class="load-more-btn" id="loadMoreBtn"><i class="fas fa-sync-alt"></i> Загрузить ещё</button>
+            </div>
+        </main>
     </div>
 
+    <script src="script.js"></script>
     <script>
-        function loadTrending() {
-            const videos = JSON.parse(localStorage.getItem('videos') || '[]');
-            
-            // Сортируем по просмотрам
-            const trending = [...videos]
-                .sort((a, b) => parseInt(b.views) - parseInt(a.views))
-                .slice(0, 20);
-            
-            const grid = document.getElementById('trendingGrid');
-            
-            if (trending.length === 0) {
-                grid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Нет видео</p>';
-                return;
+        let trendingVideos = [];
+        let displayed = 8;
+        let currentFilter = 'all';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadTrendingVideos();
+            setupFilters();
+        });
+
+        async function loadTrendingVideos() {
+            const allVideos = await loadVideos();
+            trendingVideos = [...allVideos].sort((a, b) => {
+                const viewsA = parseInt(a.views) || 0;
+                const viewsB = parseInt(b.views) || 0;
+                return viewsB - viewsA;
+            });
+            displayTrendingVideos();
+        }
+
+        function displayTrendingVideos() {
+            let filtered = trendingVideos;
+            if (currentFilter !== 'all') {
+                filtered = trendingVideos.filter(v => v.category === currentFilter);
             }
             
-            grid.innerHTML = trending.map(v => `
-                <a href="video.html?id=${v.id}" class="video-card">
-                    <div class="video-thumbnail">
-                        <img src="${v.thumbnail}">
-                        <span class="video-duration">${v.duration}</span>
-                    </div>
-                    <div class="video-info">
-                        <h4>${v.title}</h4>
-                        <p>${v.channel}</p>
-                        <span>${v.views} просмотров</span>
-                    </div>
-                </a>
-            `).join('');
+            const toShow = filtered.slice(0, displayed);
+            displayVideos(toShow, 'trendingGrid');
+            
+            const btn = document.getElementById('loadMoreBtn');
+            if (btn) {
+                btn.style.display = displayed >= filtered.length ? 'none' : 'flex';
+            }
         }
-        
-        loadTrending();
+
+        function setupFilters() {
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.category;
+                    displayed = 8;
+                    displayTrendingVideos();
+                });
+            });
+
+            document.getElementById('loadMoreBtn')?.addEventListener('click', () => {
+                displayed += 4;
+                displayTrendingVideos();
+            });
+        }
     </script>
 </body>
 </html>
